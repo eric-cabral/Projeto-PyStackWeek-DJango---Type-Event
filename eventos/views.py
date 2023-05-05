@@ -11,6 +11,9 @@ from secrets import token_urlsafe
 import os
 from django.conf import settings
 from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
+import sys
 
 @login_required
 def novo_evento(request):
@@ -112,11 +115,7 @@ def certificados_evento(request, id):
     if request.method == 'GET':
         qtd_certificados = evento.participantes.all().count() - Certificado.objects.filter(evento=evento).count()
         return render(request, 'certificados_evento.html', {'qtd_certificados': qtd_certificados, 'evento': evento})
-    
 
-from io import BytesIO
-from django.core.files.uploadedfile import InMemoryUploadedFile
-import sys
 
 def gerar_certificado(request, id):
     evento = get_object_or_404(Evento, id=id)
@@ -159,4 +158,18 @@ def gerar_certificado(request, id):
     messages.add_message(request, constants.SUCCESS, 'Certificados gerados com sucesso!')
     return redirect(reverse('certificados_evento', kwargs={'id': evento.id}))
 
-### PAREI EM 00:55:30 DA AULA 03
+
+def procurar_certificado(request, id):
+    evento = get_object_or_404(Evento, id=id)
+    if not evento.criador == request.user:
+        raise Http404('Esse evento não é seu')
+    
+    email = request.POST.get('email')
+
+    certificado = Certificado.objects.filter(evento=evento).filter(participante__email=email).first()
+
+    if not certificado:
+        messages.add_message(request, constants.ERROR, 'Esse certificado ainda não foi gerado!')
+        return redirect(reverse('certificados_evento', kwargs={'id': evento.id}))
+    
+    return redirect(certificado.certificado.url)
