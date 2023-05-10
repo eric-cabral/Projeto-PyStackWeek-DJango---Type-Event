@@ -21,6 +21,21 @@ def cadastro(request):
             return redirect(reverse('cadastro'))
         
         # TODO: Validar força da senha
+        while True:
+            if senha.islower():
+                messages.add_message(request, constants.WARNING, 'A senha deve ter pelo menos um caractere maiúsculo')
+                return redirect(reverse('cadastro'))
+            elif len(senha) < 7:
+                messages.add_message(request, constants.WARNING, 'A senha deve ter pelo menos 8 caracteres!')
+                return redirect(reverse('cadastro'))
+            elif senha.isalpha():
+                messages.add_message(request, constants.WARNING, 'Necessita de um número!')
+                return redirect(reverse('cadastro'))
+            elif senha.isalnum():
+                messages.add_message(request, constants.WARNING, 'Necessita de um caractere especial!')
+                return redirect(reverse('cadastro'))
+            else:
+                break
 
         user = User.objects.filter(username=username)
 
